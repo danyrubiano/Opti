@@ -1,0 +1,63 @@
+model "Problema de Paneles Solare"
+
+! Jesús Henríquez
+! Dany Rubiano
+
+uses "mmxprs" ! Llama a Xpress-Optimizer
+
+declarations
+KITS = 1..3 ! Kits de Instalacion
+MATERIALES = 1..8 ! Materiales para la instalación
+
+MATERIALES_KIT: array(KITS,MATERIALES) of real ! Declaracion de vector de los materiales de cada kit
+COSTOS_MATERIALES: array(MATERIALES) of real ! Declaracion de vector de costos de los materiales
+VENTA_KIT: array(KITS) of real ! Declaracion de vector del valor de venta de los kits
+DISPONIBILIDAD: array(MATERIALES) of real ! Declaracion de vector de disponibilidad de los materiales
+COSTOS_KITS: array(KITS) of real ! Declaracion de vector de los costos de los kits
+
+VARIABLES: array(KITS) of mpvar ! Declaracion de variables
+
+end-declarations
+
+MATERIALES_KIT:: [2,1,3,20,2,0,0,0,3,1,4,20,2,1,1,1,10,1,5,20,2,1,4,1]
+COSTOS_MATERIALES:: [59000,49000,2500,1150,2500,13600,85000,2500]
+VENTA_KIT:: [450000,700000,2100000]
+DISPONIBILIDAD:: [200,350,3500,100000,200,300,750,400]
+COSTOS_KITS:: [280500, 428000, 1350000]
+
+!-------------------------------------------------------------------------------------------------------------------------------------------------------------
+! Funcion objetivo 
+
+Return:= sum(s in KITS) VENTA_KIT(s)*VARIABLES(s) ! asignada a la variable return
+
+!-------------------------------------------------------------------------------------------------------------------------------------------------------------
+! Restricciones
+
+
+sum(s in KITS) MATERIALES_KIT(s,1)*VARIABLES(s) <= DISPONIBILIDAD(1)
+sum(s in KITS) MATERIALES_KIT(s,2)*VARIABLES(s) <= DISPONIBILIDAD(2)
+sum(s in KITS) MATERIALES_KIT(s,3)*VARIABLES(s) <= DISPONIBILIDAD(3)
+sum(s in KITS) MATERIALES_KIT(s,4)*VARIABLES(s) <= DISPONIBILIDAD(4)
+sum(s in KITS) MATERIALES_KIT(s,5)*VARIABLES(s) <= DISPONIBILIDAD(5)
+sum(s in KITS) MATERIALES_KIT(s,6)*VARIABLES(s) <= DISPONIBILIDAD(6)
+sum(s in KITS) MATERIALES_KIT(s,7)*VARIABLES(s) <= DISPONIBILIDAD(7)
+sum(s in KITS) MATERIALES_KIT(s,8)*VARIABLES(s) <= DISPONIBILIDAD(8)
+
+VARIABLES(3) >= VARIABLES(2)
+VARIABLES(2) >= VARIABLES(1)
+
+
+! Restriccion de variables
+forall(s in KITS) do 
+  VARIABLES(s) >= 0 ! Restriccion de no negatividad
+  VARIABLES(s) is_integer ! Restriccion de variables enteras
+end-do
+
+!-------------------------------------------------------------------------------------------------------------------------------------------------------------
+! Resolucion del problema
+maximize(Return) ! Maximizar los ingresos por ventas de los kits
+
+! Impimir solucion
+writeln("Función objetivo: ", getobjval)
+forall(s in KITS) writeln("Kit ",s,": ", getsol(VARIABLES(s)))
+end-model
