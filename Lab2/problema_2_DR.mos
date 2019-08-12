@@ -1,0 +1,81 @@
+model "Problema de Corte"
+
+uses "mmxprs" ! Llama a Xpress-Optimizer
+
+declarations
+BLOQUE = 1..18 ! Conjunto de bloques i; i =1,2,..,18
+
+VALOR: array(BLOQUE) of real ! Vector de valor del bloque i
+COSTO: array(BLOQUE) of real ! Vector de costo del bloque i
+
+VAR_DECISION: array(BLOQUE) of mpvar ! Declaracion de variables de decision binaria de extraccion o no del bloque i;
+                                       ! 1: Se extrae el bloque i
+                                       ! 0: No se extrae el bloque i
+
+DEPENDENCIA: array(BLOQUE,BLOQUE) of real ! Declaracion de dependencia 18X18
+
+end-declarations
+
+VALOR:: [200,0,0,0,0,0,300,0,0,500,0,200,0,0,0,0,1000,1200] ! Asignacion de valores al vector de valores de mercado de los bloques
+COSTO:: [100,100,100,100,100,100,100,100,1000,200,200,200,200,1000,1000,1000,300,1000] ! Asignacion de valores al vector de costos de extraccion de los costos
+
+! Construccion del grafo de dependencias
+DEPENDENCIA:: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,1,1,1,0,0,0,0]
+! 0: sin dependencia
+! 1: dependencia directa
+! 2: dependencia indirecta
+
+!-------------------------------------------------------------------------------------------------------------------------------------------------------------
+! Funcion objetivo 
+
+Return:= sum(s in BLOQUE) (VALOR(s) - COSTO(s)) *VAR_DECISION(s) ! asignada a la variable return. Maximizar el beneficio al extraer ciertos bloques
+
+!-------------------------------------------------------------------------------------------------------------------------------------------------------------
+! Restricciones
+
+! Restricciones de precedencia
+VAR_DECISION(9) <= VAR_DECISION(1)
+VAR_DECISION(9) <= VAR_DECISION(2)
+VAR_DECISION(9) <= VAR_DECISION(3)
+VAR_DECISION(10) <= VAR_DECISION(2)
+VAR_DECISION(10) <= VAR_DECISION(3)
+VAR_DECISION(10) <= VAR_DECISION(4)
+VAR_DECISION(11) <= VAR_DECISION(3)
+VAR_DECISION(11) <= VAR_DECISION(4)
+VAR_DECISION(11) <= VAR_DECISION(5)
+VAR_DECISION(12) <= VAR_DECISION(4)
+VAR_DECISION(12) <= VAR_DECISION(5)
+VAR_DECISION(12) <= VAR_DECISION(6)
+VAR_DECISION(13) <= VAR_DECISION(5)
+VAR_DECISION(13) <= VAR_DECISION(6)
+VAR_DECISION(13) <= VAR_DECISION(7)
+VAR_DECISION(14) <= VAR_DECISION(6)
+VAR_DECISION(14) <= VAR_DECISION(7)
+VAR_DECISION(14) <= VAR_DECISION(8)
+VAR_DECISION(15) <= VAR_DECISION(9)
+VAR_DECISION(15) <= VAR_DECISION(10)
+VAR_DECISION(15) <= VAR_DECISION(11)
+VAR_DECISION(16) <= VAR_DECISION(10)
+VAR_DECISION(16) <= VAR_DECISION(11)
+VAR_DECISION(16) <= VAR_DECISION(12)
+VAR_DECISION(17) <= VAR_DECISION(11)
+VAR_DECISION(17) <= VAR_DECISION(12)
+VAR_DECISION(17) <= VAR_DECISION(13)
+VAR_DECISION(18) <= VAR_DECISION(12)
+VAR_DECISION(18) <= VAR_DECISION(13)
+VAR_DECISION(18) <= VAR_DECISION(14)
+
+! Restriccion de variables de decision
+forall(s in BLOQUE) do 
+  VAR_DECISION(s) >= 0 ! Restriccion de variable binaria. No se extrae el bloque
+  VAR_DECISION(s) <= 1 ! Restriccion de variable binaria. Se extrae el bloque
+end-do
+
+!-------------------------------------------------------------------------------------------------------------------------------------------------------------
+! Resolucion del problema
+maximize(Return)
+
+! Impimir solucion
+writeln("Función objetivo: ", getobjval)
+forall(s in BLOQUE) writeln("Bloque ", s, ": ", getsol(VAR_DECISION(s)))
+end-model

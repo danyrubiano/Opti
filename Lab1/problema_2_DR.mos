@@ -1,0 +1,63 @@
+model "Problema Producción de Aleaciones"
+
+uses "mmxprs" ! Llama a Xpress-Optimizer
+
+declarations
+INDICES = 1..7 ! Conjunto de indices de las varibles de decision
+
+VARIABLES: array(INDICES) of mpvar ! Delaracion de variables de decision
+COSTOS: array(INDICES) of real ! Declaracion del vector de costos
+CARBON: array(INDICES) of real ! Declaracion del vector de composicion de carbon
+COBRE: array(INDICES) of real ! Declaracion del vector de composicion de cobre
+MANGANESO: array(INDICES) of real ! Declaracion del vector de composicion de manganeso
+DISPONIBILIDAD: array(INDICES) of real ! Declaracion del vector de disponibilidad de materia prima
+end-declarations
+
+COSTOS:: [200,250,150,220,240,200,165] ! Asignacion de valores al vector de costos
+CARBON:: [0.025,0.03,0,0,0,0,0] ! Asignacion de valores al vector de composicon de carbon
+COBRE:: [0,0,0.003,0.9,0.96,0.004,0.006] ! Asignacion de valores al vector de composicon de cobre
+MANGANESO:: [0.013,0.008,0,0,0.04,0.012,0] ! Asignacion de valores al vector de composicon de manganeso
+DISPONIBILIDAD:: [400,300,600,500,200,300,250] ! Asignacion de valores al vector de disponibilidad de materia prima
+
+!------------------------------------------------------------------------------------------------------------------
+! Funcion objetivo 
+
+Return:= sum(s in INDICES) COSTOS(s)*VARIABLES(s) ! asignada a la variable return
+
+
+!-------------------------------------------------------------------------------------------------------------------
+! Restricciones
+
+! Restricciones de disponibilidad de materias primas
+forall(s in INDICES) do 
+  VARIABLES(s) <= DISPONIBILIDAD(s)
+end-do
+
+! Restriccion de composicion minimo porcentual de carbon
+sum(s in INDICES) CARBON(s)*VARIABLES(s) >= 0.02 * (sum(s in INDICES) VARIABLES(s)) 
+! Restriccion de composicion minimo porcentual de carbon
+sum(s in INDICES) CARBON(s)*VARIABLES(s) <= 0.03 * (sum(s in INDICES) VARIABLES(s))
+! Restriccion de composicion minimo porcentual de cobre
+sum(s in INDICES) COBRE(s)*VARIABLES(s) >= 0.004 * (sum(s in INDICES) VARIABLES(s))
+! Restriccion de composicion minimo porcentual de cobre
+sum(s in INDICES) COBRE(s)*VARIABLES(s) <= 0.006 * (sum(s in INDICES) VARIABLES(s))
+! Restriccion de composicion minimo porcentual de manganeso
+sum(s in INDICES) MANGANESO(s)*VARIABLES(s) >= 0.012 * (sum(s in INDICES) VARIABLES(s))
+! Restriccion de composicion minimo porcentual de manganeso
+sum(s in INDICES) MANGANESO(s)*VARIABLES(s) <= 0.0165 * (sum(s in INDICES) VARIABLES(s))
+
+sum(s in INDICES) VARIABLES(s) = 500 ! Restriccion de cantidad de toneladas demandadas
+
+! Restriccion de variables mayores que cero
+forall(s in INDICES) do
+  VARIABLES(s) is_continuous
+  VARIABLES(s) >= 0
+end-do
+
+! Resolucion del problema
+minimize(Return)
+
+! Impimir solucion
+writeln("Función objetivo: ", getobjval)
+forall(s in INDICES) writeln("Materia prima ", s, ": ", getsol(VARIABLES(s)))
+end-model

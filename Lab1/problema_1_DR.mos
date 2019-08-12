@@ -1,0 +1,48 @@
+model "Problema Seleccion de Portafolio"
+
+uses "mmxprs" ! Llama a Xpress-Optimizer
+
+declarations
+INDICES = 1..6 ! Conjunto de indices de las varibles de decision
+
+BENEFICIOS: array(INDICES) of real ! Vector de beneficios
+TECNOLOGICAS: array(INDICES) of real ! Vector de acciones tecnologicas en la cartera
+EUROPEAS: array(INDICES) of real ! vector de aaciones europeas en la cartera
+VARIABLES: array(INDICES) of mpvar ! Delaracion de variables de decision
+end-declarations
+
+BENEFICIOS:: [0.053,0.062,0.051,0.049,0.065,0.034] ! Asignacion de valores al vector de beneficios
+TECNOLOGICAS:: [1,1,1,0,0,0] ! Asignacion de valores al vector de acciones tecnologias
+EUROPEAS:: [0,1,1,0,1,1] ! Asignacion de valores al vector de acciones europeas
+
+!-------------------------------------------------------------------------------------------------
+! Funcion objetivo 
+
+Return:= sum(s in INDICES) BENEFICIOS(s)*VARIABLES(s) ! Asignada a la variable return
+
+
+!-------------------------------------------------------------------------------------------------
+! Restricciones
+
+! Restricciones de monto a invertir por cada accion
+forall(s in INDICES) do 
+  VARIABLES(s) >= 5000
+  VARIABLES(s) <= 40000
+end-do
+
+sum(s in INDICES) TECNOLOGICAS(s)*VARIABLES(s) <= 30000 ! Restriccion del capital invertido en acciones tecnologicas
+sum(s in INDICES) EUROPEAS(s)*VARIABLES(s) >= 50000  ! Restriccion del capital invertido en acciones europeas
+sum(s in INDICES) VARIABLES(s) = 100000 ! Restriccion de la suma del capital a invertir en las 6 acciones
+
+! Restriccion de variables enteras
+forall(s in INDICES) do 
+  VARIABLES(s) is_integer
+end-do
+
+! Resolucion del problema
+maximize(Return)
+
+! Impimir solucion
+writeln("Función objetivo: ", getobjval)
+forall(s in INDICES) writeln("Acción ", s, ": ", getsol(VARIABLES(s)))
+end-model

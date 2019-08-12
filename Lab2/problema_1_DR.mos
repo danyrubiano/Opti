@@ -1,0 +1,51 @@
+model "Problema de Corte"
+
+uses "mmxprs" ! Llama a Xpress-Optimizer
+
+declarations
+PATRONES_CORTE = 1..12 ! Conjunto de patrones de corte
+TAM_ESCRITORIOS = 1..3 ! Conjunto de tamaños de los escritorios
+
+PERDIDAS_PATRON: array(PATRONES_CORTE) of real ! Vector de perdidas en cm al cortar con un patron
+DEMANDA_ESCRITORIOS: array(TAM_ESCRITORIOS) of real ! Vector de demandas de los escritorios
+
+NUM_PATAS: array(TAM_ESCRITORIOS,PATRONES_CORTE) of real ! Declaracion de numero de patas para escritorios j al cortar con el patron i (12x3)
+
+NUM_BARRAS: array(PATRONES_CORTE) of mpvar ! Vector de la variable de decision, numero de barras cortadas con el patron i
+end-declarations
+
+
+PERDIDAS_PATRON:: [10,20,0,30,10,30,0,10,20,10,20,0] ! Asignacion de valores al vector de perdidas por patron
+DEMANDA_ESCRITORIOS:: [108,125,100] ! Asignacion de valores al vector de demanda de escritorios
+
+NUM_PATAS:: [0,0,2,0,2,3,0,0,1,3,0,5,0,1,0,2,1,0,1,2,0,0,3,0,2,1,1,0,0,0,2,1,2,1,0,0] ! Asignacion de valores a matriz de patas por patron y tamañoo de escritorio
+
+
+!-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+! Funcion objetivo 
+
+Return:= sum(s in PATRONES_CORTE) NUM_BARRAS(s)*PERDIDAS_PATRON(s) ! asignada a la variable return. Minimizar las perdidas de corte
+
+!-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+! Restricciones
+
+! Restricciones de barras por escritorio
+!sum(u in TAM_ESCRITORIOS, s in PATRONES_CORTE) (NUM_PATAS(u,s)*NUM_BARRAS(s) - 4*DEMANDA_ESCRITORIOS(u)) = 0
+2*NUM_BARRAS(3) + 2*NUM_BARRAS(5) + 3*NUM_BARRAS(6) + NUM_BARRAS(9) + 3*NUM_BARRAS(10) + 5*NUM_BARRAS(12) = 4*DEMANDA_ESCRITORIOS(1)
+NUM_BARRAS(2) + 2*NUM_BARRAS(4) + NUM_BARRAS(5) + NUM_BARRAS(7) + 2*NUM_BARRAS(8) + 3*NUM_BARRAS(11) = 4*DEMANDA_ESCRITORIOS(2)
+2*NUM_BARRAS(1) + NUM_BARRAS(2) + NUM_BARRAS(3) + 2*NUM_BARRAS(7) + NUM_BARRAS(8) + 2*NUM_BARRAS(9) + NUM_BARRAS(10) = 4*DEMANDA_ESCRITORIOS(3)
+
+! Restriccion de variables enteras
+forall(s in PATRONES_CORTE) do 
+  NUM_BARRAS(s) >= 0
+  NUM_BARRAS(s) is_integer
+end-do
+
+!-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+! Resolucion del problema
+minimize(Return)
+
+! Impimir solucion
+writeln("Función objetivo: ", getobjval)
+forall(s in PATRONES_CORTE) writeln("Patron ", s, ": ", getsol(NUM_BARRAS(s)))
+end-model

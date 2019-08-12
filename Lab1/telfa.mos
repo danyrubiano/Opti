@@ -1,0 +1,36 @@
+model "telfa" 
+uses "mmxprs" ! Llama a Xpress-Optimizer
+
+declarations
+INDICES = 1..2 ! Conjunto de indices de las varibles de decision
+
+BENEFICIOS: array(INDICES) of real ! Vector de beneficios de ada producto
+
+TRABAJO: array(INDICES) of real ! Vector de trabajo utilizado en cada producto
+MADERA: array(INDICES) of real ! Vector de madera utilizada en cada producto
+
+VARIABLES: array(INDICES) of mpvar ! Delaracion de variables de decision
+end-declarations
+
+BENEFICIOS:: [8,5] ! Asignacion de valores al vector beneficio
+TRABAJO:: [1,1] ! Asignacion de valores al vector trabajo
+MADERA:: [9,5] ! Asignacion de valores al vector madera
+
+! Funcion objetivo asignada a la variable Return
+Return:= sum(s in INDICES) BENEFICIOS(s)*VARIABLES(s)
+
+sum(s in INDICES) TRABAJO(s)*VARIABLES(s) <= 60 ! Restriccion de trabajo
+sum(s in INDICES) MADERA(s)*VARIABLES(s) <= 450 ! Restriccion de madera
+
+! Restriccion de variables enteras
+forall(s in INDICES) do 
+VARIABLES(s) is_integer
+end-do
+
+! Resolver el problema
+maximize(Return)
+
+! Impimir solucion
+writeln("Total return: ", getobjval)
+forall(s in INDICES) writeln(s, ": ", getsol(VARIABLES(s)))
+end-model

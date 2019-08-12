@@ -1,0 +1,43 @@
+model "problema transporte"
+	
+uses "mmxprs" ! Llama a Xpress-Optimizer
+
+declarations
+
+MINA = 1..4 ! Conjunto de minas
+HORNO = 1..3 ! Conjunto de hornos
+
+COSTOS: array(MINA,HORNO) of real ! Declaracion de matriz de costos 4x3
+
+VARIABLES: array(MINA,HORNO) of mpvar ! Declaracion de variables de decision 4x3
+
+end-declarations
+
+! Asignacion de valores al vector de costos
+
+COSTOS:: [8,4,22,12,8,20,13,20,10,18,14,4]  
+
+! Funcion objetivo asignada a la variable return
+
+Return:= sum(s in MINA, u in HORNO) VARIABLES(s,u)*COSTOS(s,u)
+
+! Restricciones de oferta
+
+sum(s in HORNO) VARIABLES(1,s) = 150
+sum(s in HORNO) VARIABLES(2,s) = 100
+sum(s in HORNO) VARIABLES(3,s) = 50
+sum(s in HORNO) VARIABLES(4,s) = 200
+
+! Restricciones de demanda
+
+sum(s in MINA) VARIABLES(s,1) = 100
+sum(s in MINA) VARIABLES(s,2) = 200
+sum(s in MINA) VARIABLES(s,3) = 200
+
+! Resolver el problema
+minimize(Return)
+
+! Impimir solucion
+writeln("Total return: ", getobjval)
+forall(s in MINA,u in HORNO) writeln("X ",s,u, ": ", getsol(VARIABLES(s,u)))
+end-model
